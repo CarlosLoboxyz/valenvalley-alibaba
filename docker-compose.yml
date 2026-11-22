@@ -1,0 +1,87 @@
+# Alibaba B2B Sourcing stack: PocketBase (auth + metadata) + FastAPI backend.
+#
+#   cp .env.example .env   # fill in SCRAPINGBEE_API_KEY, PB_ADMIN_*, CORS_ORIGINS, ...
+#   docker compose up -d --build
+#
+# The SvelteKit frontend lives in a separate repository. A placeholder service is
+# included behind the "frontend" profile; point FRONTEND_CONTEXT at that repo and run
+#   docker compose --profile frontend up -d --build
+
+name: alibaba-sourcing
+
+services:
+  pocketbase:
+    build:
+      context: ./pocketbase
+    restart: unless-stopped
+    environment:
+      PB_ADMIN_EMAIL: ${PB_ADMIN_EMAIL:-}
+      PB_ADMIN_PASSWORD: ${PB_ADMIN_PASSWORD:-}
+      PB_APP_NAME: ${PB_APP_NAME:-Alibaba Sourcing}
+      PB_APP_URL: ${PB_APP_URL:-http://localhost:5173}
+      PB_SMTP_HOST: ${PB_SMTP_HOST:-}
+      PB_SMTP_PORT: ${PB_SMTP_PORT:-587}
+      PB_SMTP_USERNAME: ${PB_SMTP_USERNAME:-}
+      PB_SMTP_PASSWORD: ${PB_SMTP_PASSWORD:-}
+      PB_SMTP_TLS: ${PB_SMTP_TLS:-false}
+      PB_SMTP_SENDER: ${PB_SMTP_SENDER:-}
+    volumes:
+      - pb_data:/pb/pb_data
+    # Published on localhost only. Put a TLS reverse proxy in front for public access;
+    # the browser must reach PocketBase directly for login/signup.
+    ports:
+      - "${PB_BIND:-127.0.0.1}:${PB_PORT:-8090}:8090"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      pocketbase:
+        condition: service_healthy
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      # Container-internal wiring always wins over .env values
+      POCKETBASE_URL: http://pocketbase:8090
+      OUTPUT_DIR: /app/output
+      DEBUG_DIR: /app/debug_raw
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+    volumes:
+      - backend_output:/app/output
+      - backend_debug:/app/debug_raw
+    ports:
+      - "${BACKEND_BIND:-127.0.0.1}:${BACKEND_PORT:-8000}:8000"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  # Placeholder: the SvelteKit app is built from its own repository.
+  frontend:
+    profiles: ["frontend"]
+    build:
+      context: ${FRONTEND_CONTEXT:-./frontend}
+      args:
+        PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:8000/api/v1}
+        PUBLIC_POCKETBASE_URL: ${PUBLIC_POCKETBASE_URL:-http://localhost:8090}
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - pocketbase
+    environment:
+      PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:8000/api/v1}
+      PUBLIC_POCKETBASE_URL: ${PUBLIC_POCKETBASE_URL:-http://localhost:8090}
+    ports:
+      - "${FRONTEND_PORT:-5173}:3000"
+
+volumes:
+  pb_data:
+  backend_output:
+  backend_debug:

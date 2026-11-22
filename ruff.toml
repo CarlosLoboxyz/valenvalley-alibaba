@@ -1,0 +1,12 @@
+line-length = 120
+target-version = "py311"
+extend-exclude = [".venv", ".direnv"]
+
+[lint]
+select = ["E", "F", "I", "B"]
+ignore = ["E501", "B008"]
+
+[lint.per-file-ignores]
+"main.py" = ["E402"]
+"scripts/*.py" = ["E402", "E701", "E702", "E741", "B007", "B905", "F401"]
+"backend/app/services/pipeline_bridge.py" = ["E402", "I001"]

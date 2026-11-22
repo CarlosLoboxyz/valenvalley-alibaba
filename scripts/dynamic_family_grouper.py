@@ -16,6 +16,8 @@ from sklearn.cluster import AgglomerativeClustering
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
+from pipeline_errors import InputError
+
 load_dotenv()
 
 DEFAULT_INPUT = os.getenv("RFQ_EXCEL_FILE", "products.xlsx")
@@ -28,6 +30,7 @@ HEADER_ALIASES = {
     "position": "position",
     "pos": "position",
     "item_no": "position",
+    "item_number": "position",
     "line": "position",
     "name": "name",
     "item_name": "name",
@@ -40,8 +43,13 @@ HEADER_ALIASES = {
     "qty": "qty",
     "quantity": "qty",
     "min_price": "min_price",
+    "minprice": "min_price",
+    "min_unit_price": "min_price",
     "max_price": "max_price",
+    "maxprice": "max_price",
+    "max_unit_price": "max_price",
     "brand": "brand",
+    "preferred_brand": "brand",
     "technical_specs": "technical_specs",
     "tech_specs": "technical_specs",
     "specs": "technical_specs",
@@ -92,7 +100,7 @@ def simple_singularize(word: str) -> str:
 
 def load_catalog(excel_path: str, sheet_name: Optional[str] = None) -> pd.DataFrame:
     if not os.path.exists(excel_path):
-        sys.exit(f"Error: File not found: {excel_path}")
+        raise InputError(f"File not found: {excel_path}")
 
     if excel_path.lower().endswith(".csv"):
         df = pd.read_csv(excel_path)
@@ -100,12 +108,12 @@ def load_catalog(excel_path: str, sheet_name: Optional[str] = None) -> pd.DataFr
         xls = pd.ExcelFile(excel_path)
         target_sheet = sheet_name or xls.sheet_names[0]
         if target_sheet not in xls.sheet_names:
-            sys.exit(f"Error: Sheet '{target_sheet}' not found. Available: {xls.sheet_names}")
+            raise InputError(f"Sheet '{target_sheet}' not found. Available: {xls.sheet_names}")
         df = pd.read_excel(excel_path, sheet_name=target_sheet)
 
     df = df.rename(columns={c: HEADER_ALIASES.get(normalize_header(c), normalize_header(c)) for c in df.columns})
     if "name" not in df.columns:
-        sys.exit(f"Error: Required 'name' column not found. Columns: {list(df.columns)}")
+        raise InputError(f"Required 'name' column not found. Columns: {list(df.columns)}")
 
     df = df[df["name"].notna() & (df["name"].astype(str).str.strip() != "")].copy()
     if "position" not in df.columns:
@@ -544,7 +552,10 @@ def main():
     parser.add_argument("--terms-out", default=DEFAULT_TERMS_OUT)
     args = parser.parse_args()
 
-    df = load_catalog(args.input_file, sheet_name=args.sheet)
+    try:
+        df = load_catalog(args.input_file, sheet_name=args.sheet)
+    except InputError as exc:
+        sys.exit(f"Error: {exc}")
     vdf = extract_views(df)
     S_strict, S_broad = compute_similarity_matrices(df, vdf)
     labels = cluster_products(

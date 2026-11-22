@@ -4,12 +4,14 @@ import os
 import re
 import sys
 import time
+from dataclasses import dataclass, field
 from typing import Optional
 from urllib.parse import parse_qs, urlencode, urlparse
 
 import json_repair
 import requests
 from dotenv import load_dotenv
+from pipeline_errors import InputError
 
 load_dotenv()
 
@@ -181,6 +183,7 @@ def clean_products(products: list, was_repaired: bool) -> list[dict]:
 
     return cleaned
 
+
 def build_search_url(term: str, page: int = 1) -> str:
     query = urlencode({"SearchText": term, "tab": "all", "page": page})
     return f"{ALIBABA_SEARCH_URL}?{query}"
@@ -208,35 +211,37 @@ def parse_ai_response(raw_text: str) -> tuple[dict, bool]:
         raise ValueError(f"Unparseable response snippet: {raw_text[:200]}")
 
 
-def clean_products(products: list, was_repaired: bool) -> list[dict]:
-    """Normalize URLs and drop any half-written trailing item from a truncated response."""
-    cleaned = [p for p in products if isinstance(p, dict) and p.get("title")]
+@dataclass
+class ScrapeResult:
+    """Structured outcome of one ScrapingBee page request."""
 
-    # If the response was truncated, the final object is often incomplete
-    if was_repaired and cleaned:
-        last = cleaned[-1]
-        if not last.get("price") and not last.get("supplier"):
-            cleaned.pop()
-
-    for item in cleaned:
-        url = item.get("url")
-        if isinstance(url, str):
-            url = url.split("?", 1)[0].strip()
-            if url.startswith("//"):
-                url = f"https:{url}"
-            item["url"] = url
-
-    return cleaned
+    products: list = field(default_factory=list)
+    spb_cost: Optional[int] = None  # credits reported by the Spb-cost header
+    repaired: bool = False  # json-repair fallback was needed
+    debug_path: Optional[str] = None  # raw payload dump, if one was written
 
 
-def scrape_term(
+def _parse_cost(raw: Optional[str]) -> Optional[int]:
+    try:
+        return int(float(str(raw).strip()))
+    except (TypeError, ValueError):
+        return None
+
+
+def scrape_term_detailed(
     term: str,
     api_key: str,
     page: int = 1,
     stealth: bool = False,
     max_products: int = 20,
     debug_dir: Optional[str] = None,
-) -> list[dict]:
+    quiet: bool = False,
+) -> ScrapeResult:
+    """Fetch one Alibaba search page via ScrapingBee and return a structured result.
+
+    The ``Authorization`` header carries the API key; the key is never placed in
+    the URL, logged, or attached to raised exceptions.
+    """
     target_url = build_search_url(term, page=page)
 
     headers = {"Authorization": f"Bearer {api_key}"}
@@ -252,7 +257,11 @@ def scrape_term(
     else:
         params["premium_proxy"] = "true"
 
-    print(f"Searching Alibaba for '{term}' (page {page})...", file=sys.stderr)
+    def log(msg: str) -> None:
+        if not quiet:
+            print(msg, file=sys.stderr)
+
+    log(f"Searching Alibaba for '{term}' (page {page})...")
     response = requests.get(
         SCRAPINGBEE_URL,
         headers=headers,
@@ -261,33 +270,52 @@ def scrape_term(
     )
     response.raise_for_status()
 
-    cost = response.headers.get("Spb-cost", "unknown")
+    cost_raw = response.headers.get("Spb-cost", "unknown")
     raw_text = response.text
+    debug_path: Optional[str] = None
 
     try:
         data, was_repaired = parse_ai_response(raw_text)
     except Exception:
         if debug_dir:
             saved = save_debug_response(debug_dir, term, page, raw_text)
-            print(f"  Saved raw response to {saved}", file=sys.stderr)
+            log(f"  Saved raw response to {saved}")
         raise
 
     products = clean_products(data.get("products", []), was_repaired)
 
     if was_repaired:
         if debug_dir:
-            save_debug_response(debug_dir, term, page, raw_text)
-        print(
-            f"  Done (credits: {cost}) — repaired truncated JSON, recovered {len(products)} products",
-            file=sys.stderr,
-        )
+            debug_path = save_debug_response(debug_dir, term, page, raw_text)
+        log(f"  Done (credits: {cost_raw}) - repaired truncated JSON, recovered {len(products)} products")
     else:
-        print(
-            f"  Done (credits: {cost}) — extracted {len(products)} products",
-            file=sys.stderr,
-        )
+        log(f"  Done (credits: {cost_raw}) - extracted {len(products)} products")
 
-    return products
+    return ScrapeResult(
+        products=products,
+        spb_cost=_parse_cost(cost_raw),
+        repaired=was_repaired,
+        debug_path=debug_path,
+    )
+
+
+def scrape_term(
+    term: str,
+    api_key: str,
+    page: int = 1,
+    stealth: bool = False,
+    max_products: int = 20,
+    debug_dir: Optional[str] = None,
+) -> list[dict]:
+    """CLI-compatible wrapper: returns only the cleaned product list."""
+    return scrape_term_detailed(
+        term,
+        api_key,
+        page=page,
+        stealth=stealth,
+        max_products=max_products,
+        debug_dir=debug_dir,
+    ).products
 
 
 def load_terms(cli_terms: list[str], file_path: Optional[str]) -> list[str]:
@@ -298,7 +326,7 @@ def load_terms(cli_terms: list[str], file_path: Optional[str]) -> list[str]:
 
     if resolved_file:
         if not os.path.exists(resolved_file):
-            sys.exit(f"Error: Terms file not found: {resolved_file}")
+            raise InputError(f"Terms file not found: {resolved_file}")
         with open(resolved_file, "r", encoding="utf-8") as f:
             for line in f:
                 cleaned = line.strip()
@@ -337,7 +365,10 @@ def main():
     if not SCRAPINGBEE_API_KEY:
         sys.exit("Error: SCRAPINGBEE_API_KEY is missing. Add it to your .env file.")
 
-    terms = load_terms(args.terms, args.file)
+    try:
+        terms = load_terms(args.terms, args.file)
+    except InputError as exc:
+        sys.exit(f"Error: {exc}")
     if not terms:
         sys.exit("Error: Pass search terms, use -f terms.txt, or set DEFAULT_TERMS_FILE in .env.")
 

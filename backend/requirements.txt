@@ -1,0 +1,21 @@
+# Runtime dependencies for the FastAPI backend and the shared pipeline scripts.
+# Pinned to the versions the test suite was run against (Python 3.11+).
+
+# --- Web stack ---
+fastapi==0.165.0
+uvicorn[standard]==0.54.0
+python-multipart==0.0.34
+pydantic==2.14.4
+pydantic-settings==2.16.3
+sse-starlette==3.7.0
+anyio==4.16.0
+httpx==0.28.1        # also used as the PocketBase client
+
+# --- Existing pipeline dependencies ---
+requests==2.34.2
+python-dotenv==1.2.4
+json-repair==0.64.9
+openpyxl==3.1.5
+pandas==3.1.1
+numpy==2.5.5
+scikit-learn==1.9.1

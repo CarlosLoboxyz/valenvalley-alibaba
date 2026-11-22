@@ -15,6 +15,7 @@ from openpyxl.styles import Font, PatternFill
 # Reuse your existing scraper and vendor scorer modules
 import recommend_vendors as rv
 import scrape_alibaba as sa
+from pipeline_errors import InputError
 
 load_dotenv()
 
@@ -136,7 +137,9 @@ def parse_brand_requirement(raw_brand: Any) -> tuple[Optional[str], bool]:
     return (cleaned or None), allow_similar
 
 
-def parse_technical_specs(raw_specs: Any) -> tuple[dict[str, Any], list[str], str]:
+def parse_technical_specs(
+    raw_specs: Any, warnings: Optional[list[str]] = None
+) -> tuple[dict[str, Any], list[str], str]:
     """
     Parse technical specs cell (JSON object, JSON list, or plain text).
     Returns: (specs_dict, extracted_certifications, formatted_specs_text)
@@ -154,8 +157,12 @@ def parse_technical_specs(raw_specs: Any) -> tuple[dict[str, Any], list[str], st
         except json.JSONDecodeError:
             try:
                 parsed = json_repair.loads(text)
+                if warnings is not None:
+                    warnings.append("Malformed technical specs JSON was repaired")
             except Exception:
                 parsed = None
+                if warnings is not None:
+                    warnings.append("Technical specs could not be parsed; treated as plain text")
 
     specs_dict: dict[str, Any] = {}
     certs: list[str] = []
@@ -274,16 +281,21 @@ def load_rfq_excel(
     excel_path: str,
     sheet_name: Optional[str] = None,
     include_brand_in_search: bool = False,
+    warnings: Optional[list[str]] = None,
 ) -> list[dict[str, Any]]:
-    """Read and normalize all line items from the predefined RFQ Excel workbook."""
+    """Read and normalize all line items from the predefined RFQ Excel workbook.
+
+    Raises ``InputError`` on unusable input. If ``warnings`` is provided, non-fatal
+    parse notes (e.g. repaired spec JSON) are appended to it as "Row N: ..." strings.
+    """
     if not os.path.exists(excel_path):
-        sys.exit(f"Error: Excel file not found: {excel_path}")
+        raise InputError(f"Excel file not found: {excel_path}")
 
     wb = load_workbook(filename=excel_path, read_only=True, data_only=True)
     try:
         if sheet_name:
             if sheet_name not in wb.sheetnames:
-                sys.exit(f"Error: Sheet '{sheet_name}' not found. Available: {wb.sheetnames}")
+                raise InputError(f"Sheet '{sheet_name}' not found. Available: {wb.sheetnames}")
             ws = wb[sheet_name]
         else:
             ws = wb.active
@@ -296,7 +308,7 @@ def load_rfq_excel(
                 break
 
         if not header_row:
-            sys.exit("Error: Excel worksheet is empty.")
+            raise InputError("Excel worksheet is empty.")
 
         col_map: dict[int, str] = {}
         for idx, cell in enumerate(header_row):
@@ -305,8 +317,8 @@ def load_rfq_excel(
                 col_map[idx] = HEADER_ALIASES[norm]
 
         if "name" not in col_map.values():
-            sys.exit(
-                f"Error: Could not find required 'name' column. Found headers: {list(header_row)}"
+            raise InputError(
+                f"Could not find required 'name' column. Found headers: {list(header_row)}"
             )
 
         items: list[dict[str, Any]] = []
@@ -338,9 +350,12 @@ def load_rfq_excel(
             brand_raw = str(raw_record.get("brand") or "").strip() or None
             brand_name, allow_similar = parse_brand_requirement(brand_raw)
 
+            row_warnings: list[str] = []
             specs_dict, spec_certs, specs_text = parse_technical_specs(
-                raw_record.get("technical_specs")
+                raw_record.get("technical_specs"), warnings=row_warnings
             )
+            if warnings is not None:
+                warnings.extend(f"Position {position}: {w}" for w in row_warnings)
             merged_desc = merge_description_and_specs(description, specs_text)
             search_query = build_search_query(
                 name=name,
@@ -388,8 +403,11 @@ def load_cache(cache_path: Optional[str]) -> dict[str, Any]:
 def save_cache(cache_path: Optional[str], cache_data: dict[str, Any]) -> None:
     if not cache_path:
         return
-    with open(cache_path, "w", encoding="utf-8") as f:
+    # Atomic write: temp file in the same directory, then os.replace
+    tmp_path = f"{cache_path}.tmp"
+    with open(tmp_path, "w", encoding="utf-8") as f:
         json.dump(cache_data, f, indent=2, ensure_ascii=False)
+    os.replace(tmp_path, cache_path)
 
 
 def evaluate_rfq_position(
@@ -401,10 +419,22 @@ def evaluate_rfq_position(
     strict_moq: bool,
     strict_certs: bool,
     strict_min_price: bool,
+    weights: Optional[dict[str, float]] = None,
+    weight_vendor_score: Optional[float] = None,
+    weight_rfq_fit: Optional[float] = None,
+    global_max_price: Optional[float] = None,
 ) -> dict[str, Any]:
-    """Filter and score scraped listings for a single Excel RFQ line item."""
+    """Filter and score scraped listings for a single Excel RFQ line item.
+
+    Optional overrides (``weights``, ``weight_vendor_score``, ``weight_rfq_fit``,
+    ``global_max_price``) default to module/env values so the CLI is unchanged.
+    """
     combined_certs = rv.normalize_cert_list(global_required_certs + item["extracted_certs"])
-    weights = rv.normalized_weights(rv.RAW_WEIGHTS)
+    weights = rv.normalized_weights(weights if weights is not None else rv.RAW_WEIGHTS)
+    wv_raw = WEIGHT_VENDOR_SCORE if weight_vendor_score is None else weight_vendor_score
+    wf_raw = WEIGHT_RFQ_FIT if weight_rfq_fit is None else weight_rfq_fit
+    # RFQ line max price wins; otherwise fall back to a global cap
+    effective_max_price = item["max_price"] if item["max_price"] is not None else global_max_price
 
     vendors = rv.aggregate_vendors(listings, target_qty=item["qty"])
     qualified = []
@@ -415,7 +445,7 @@ def evaluate_rfq_position(
             vendor=v,
             target_qty=item["qty"],
             strict_moq=strict_moq,
-            max_price=item["max_price"],
+            max_price=effective_max_price,
             required_certs=combined_certs,
             strict_certs=strict_certs,
             min_years=min_years,
@@ -441,9 +471,9 @@ def evaluate_rfq_position(
         required_certs=combined_certs,
     )
 
-    total_blend = max(1.0, WEIGHT_VENDOR_SCORE + WEIGHT_RFQ_FIT)
-    w_vendor = WEIGHT_VENDOR_SCORE / total_blend
-    w_fit = WEIGHT_RFQ_FIT / total_blend
+    total_blend = max(1.0, wv_raw + wf_raw)
+    w_vendor = wv_raw / total_blend
+    w_fit = wf_raw / total_blend
 
     final_ranked = []
     for v in base_ranked:
@@ -509,12 +539,7 @@ def evaluate_rfq_position(
             max(0.0, (vendor_score * w_vendor) + (rfq_fit_score * w_fit) - price_penalty), 1
         )
 
-        if final_score >= 75:
-            tier = "Strong Recommend"
-        elif final_score >= 55:
-            tier = "Consider"
-        else:
-            tier = "Caution"
+        tier = rv.tier_for_score(final_score)
 
         final_ranked.append(
             {
@@ -765,11 +790,14 @@ def main():
         create_sample_excel(args.create_sample)
         return
 
-    items = load_rfq_excel(
-        args.excel_file,
-        sheet_name=args.sheet,
-        include_brand_in_search=args.include_brand_in_search,
-    )
+    try:
+        items = load_rfq_excel(
+            args.excel_file,
+            sheet_name=args.sheet,
+            include_brand_in_search=args.include_brand_in_search,
+        )
+    except InputError as exc:
+        sys.exit(f"Error: {exc}")
     if not items:
         sys.exit("Error: No valid product rows found in the Excel file.")
 

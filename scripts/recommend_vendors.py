@@ -248,6 +248,19 @@ def check_hard_filters(
     return reasons
 
 
+TIER_STRONG_MIN = 75
+TIER_CONSIDER_MIN = 55
+
+
+def tier_for_score(score: float) -> str:
+    """Single source of truth for recommendation tiers."""
+    if score >= TIER_STRONG_MIN:
+        return "Strong Recommend"
+    if score >= TIER_CONSIDER_MIN:
+        return "Consider"
+    return "Caution"
+
+
 def score_vendors(
     vendors: list[dict],
     weights: dict[str, float],
@@ -386,12 +399,7 @@ def score_vendors(
             sum(breakdown[k] * weights[k] for k in breakdown), 1
         )
 
-        if total_score >= 75:
-            tier = "Strong Recommend"
-        elif total_score >= 55:
-            tier = "Consider"
-        else:
-            tier = "Caution"
+        tier = tier_for_score(total_score)
 
         ranked.append(
             {
