@@ -43,7 +43,7 @@ Keep existing pipeline modules intact and add the FastAPI application under `bac
 ├── AGENTS.md                            # This guide
 ├── .env                                 # Secrets, proxy settings, default client rules & weights
 ├── main.py                              # Existing CLI orchestrator (MUST remain functional)
-├── templates/products.xlsx              # Sample 100-item RFQ catalog (sheet: "products"); default RFQ_EXCEL_FILE
+├── templates/products.xlsx              # Sample 100-item RFQ catalog (sheet: "products"); CLI sample only (not shipped in the Docker image)
 ├── docker-compose.yml                   # standalone dev stack: pocketbase + backend (+ optional frontend profile)
 ├── pocketbase/                          # Dockerfile (pinned, checksummed binary) + pb_migrations/
 ├── output/                              # Shared runtime artifacts
@@ -131,7 +131,7 @@ Load configuration from the repository root `.env` using `pydantic-settings`. Mi
 | `DEFAULT_PAGES` | `1` | Pages scraped per family |
 | `REQUEST_DELAY_SECONDS` | `1.0` | Throttle between requests |
 | `DEBUG_DIR` | `debug_raw` | Raw response dump dir on parse/repair failures |
-| `RFQ_EXCEL_FILE` | `products.xlsx` | Default RFQ workbook path |
+| `RFQ_EXCEL_FILE` | `""` | Optional operator default RFQ (`rfq_file_id: "default"`); empty = no implicit default, `rfq_file_id` is always required |
 | `FAMILY_GRANULARITY` | `balanced` | Allowed: `fine`, `balanced`, `broad` |
 | `RECOMMEND_TOP_N` | `5` | Top vendors retained per line item |
 | `CLIENT_REQUIRED_CERTS` | `""` | Comma-separated default certifications |
@@ -192,10 +192,12 @@ All endpoints live under `/api/v1`, use snake_case JSON fields, and return consi
 - `POST /api/v1/rfq/upload`
   - Accepts `multipart/form-data` with `.xlsx` file (enforce extension and size limit, e.g. 20 MB; sanitize filename; store under `output/uploads/{upload_id}.xlsx`).
   - Parses workbook via `process_rfq_excel.py` and returns `upload_id`, `filename`, `row_count`, detected sheets, parsed warnings (e.g. malformed spec JSON repaired), and a row preview.
+- `POST /api/v1/rfq/items`
+  - JSON body `{filename?, items: [{name, qty?, unit?, position?, description?, min_price?, max_price?, brand?, technical_specs?}]}` (1..5000 items). Writes a canonical-header `.xlsx` (strings stored as text, never formulas) and registers it exactly like an upload; same response as `/rfq/upload`. Used by the frontend for CSV and manually typed lists.
 - `GET /api/v1/rfq/files`
-  - Lists available RFQ workbooks (including default `products.xlsx` and uploaded files).
+  - Lists the caller's RFQ lists (uploads and `/rfq/items`), plus `default` only if `RFQ_EXCEL_FILE` is set.
 - `POST /api/v1/rfq/group` *(0 credits — Dry Run)*
-  - Request body: `rfq_file_id` (or default), `granularity` (`fine` | `balanced` | `broad`), `limit` (optional int), `positions` (optional range string like `"1-10"`), `pages` (int, default 1), `stealth` (bool, default false).
+  - Request body: `rfq_file_id` (REQUIRED), `granularity` (`fine` | `balanced` | `broad`), `limit` (optional int), `positions` (optional range string like `"1-10"`), `pages` (int, default 1), `stealth` (bool, default false).
   - Runs `dynamic_family_grouper.py`, writes `output/family_search_plan.json` (and optionally `output/products_grouped.xlsx`), checks `family_scrape_cache.json` for cache hits, and returns:
     - `total_items`, `family_count`, `api_reduction_pct`
     - `cached_families`, `uncached_families`
@@ -208,6 +210,8 @@ All endpoints live under `/api/v1`, use snake_case JSON fields, and return consi
   - Validates `SCRAPINGBEE_API_KEY` is configured (return HTTP `422`/`503` if missing).
   - Enqueues a background job, returns HTTP `202` with `job_id`, `status: "queued"`, and projected credit budget.
   - Prevents duplicate concurrent live scrape jobs from racing on the same queries.
+- `GET /api/v1/jobs/active`
+  - The caller's queued/running job (`JobStatus`) or `null`, so the UI can resume progress after a refresh. Any authenticated user.
 - `GET /api/v1/jobs/{job_id}`
   - Returns job state (`queued` | `running` | `completed` | `cancelled` | `failed`), progress counts (`completed_families`, `total_families`, `cache_hits`, `live_fetches`), `credits_spent` (sum of `Spb-cost`), per-family logs, and error summary.
 - `GET /api/v1/jobs/{job_id}/events`

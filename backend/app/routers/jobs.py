@@ -7,7 +7,7 @@ import anyio
 from fastapi import APIRouter, Depends, Header
 from sse_starlette.sse import EventSourceResponse
 
-from ..core.auth import AuthUser, require_verified_user
+from ..core.auth import AuthUser, get_current_user, require_verified_user
 from ..core.errors import ApiError
 from ..deps import Services, get_services
 from ..schemas.jobs import JobCreated, JobStatus, ScrapeJobRequest
@@ -28,6 +28,14 @@ async def create_scrape_job(
     job = await anyio.to_thread.run_sync(svc.jobs.create, user, body)
     # Contract: creation always reports "queued" (the worker may already have flipped to running)
     return {"job_id": job.job_id, "status": "queued", "projected_budget": job.projected}
+
+
+@router.get("/active", response_model=Optional[JobStatus])
+async def active_job(
+    user: AuthUser = Depends(get_current_user), svc: Services = Depends(get_services)
+) -> Optional[dict]:
+    """The caller's queued or running scrape job, or null. Lets the UI resume after a refresh."""
+    return await anyio.to_thread.run_sync(svc.jobs.active_for, user)
 
 
 @router.get("/{job_id}", response_model=JobStatus)

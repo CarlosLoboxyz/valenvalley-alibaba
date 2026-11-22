@@ -39,7 +39,7 @@ class RFQFileInfo(BaseModel):
 class TargetSlice(BaseModel):
     """Which RFQ rows to process. Shared by grouping, scraping and scoring."""
 
-    rfq_file_id: str = Field(default="default", max_length=64)
+    rfq_file_id: str = Field(min_length=1, max_length=64)  # id from /rfq/upload or /rfq/items
     granularity: Optional[Granularity] = None  # None -> FAMILY_GRANULARITY
     limit: Optional[int] = Field(default=None, ge=1, le=10000)
     positions: Optional[str] = Field(default=None, pattern=POSITIONS_PATTERN)
@@ -75,3 +75,25 @@ class GroupResponse(BaseModel):
     granularity: Granularity
     families: list[FamilyOut]
     warnings: list[str] = []
+
+
+class RFQItemIn(BaseModel):
+    """One line of a materials list submitted as JSON (canonical, already validated by the UI)."""
+
+    name: str = Field(min_length=1, max_length=300)
+    qty: Optional[int] = Field(default=None, ge=1, le=100_000_000)
+    unit: Optional[str] = Field(default=None, max_length=40)
+    position: Optional[int] = Field(default=None, ge=1, le=1_000_000)
+    description: Optional[str] = Field(default=None, max_length=2000)
+    min_price: Optional[float] = Field(default=None, ge=0, le=1e9)
+    max_price: Optional[float] = Field(default=None, ge=0, le=1e9)
+    brand: Optional[str] = Field(default=None, max_length=120)
+    technical_specs: Optional[str] = Field(default=None, max_length=4000)
+
+
+MAX_RFQ_ITEMS = 5000
+
+
+class RFQItemsRequest(BaseModel):
+    filename: Optional[str] = Field(default=None, max_length=120)
+    items: list[RFQItemIn] = Field(min_length=1, max_length=MAX_RFQ_ITEMS)

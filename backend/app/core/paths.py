@@ -34,7 +34,7 @@ class AppPaths:
     users_dir: Path
     cache_file: Path
     debug_dir: Path
-    default_rfq: Path
+    default_rfq: Optional[Path]
 
     @classmethod
     def from_settings(cls, settings: Settings) -> "AppPaths":
@@ -47,7 +47,7 @@ class AppPaths:
             users_dir=out / "users",
             cache_file=out / "family_scrape_cache.json",
             debug_dir=_abs(settings.debug_dir),
-            default_rfq=_abs(settings.rfq_excel_file),
+            default_rfq=_abs(settings.rfq_excel_file) if settings.rfq_excel_file.strip() else None,
         )
 
     def ensure(self) -> None:

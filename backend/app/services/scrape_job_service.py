@@ -371,6 +371,15 @@ class ScrapeJobService:
     def get(self, user: AuthUser, job_id: str) -> dict[str, Any]:
         return self._load(user, job_id)[1]
 
+    def active_for(self, user: AuthUser) -> Optional[dict[str, Any]]:
+        with self._registry_lock:
+            mine = [j for j in self._jobs.values() if j.user.id == user.id]
+        for job in mine:
+            snap = job.snapshot()
+            if snap["status"] not in TERMINAL:
+                return snap
+        return None
+
     def cancel(self, user: AuthUser, job_id: str) -> dict[str, Any]:
         job, snap = self._load(user, job_id)
         if job is None or snap["status"] in TERMINAL:

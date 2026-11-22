@@ -14,7 +14,7 @@ from ..core.auth import AuthUser
 from ..core.config import Settings
 from ..core.errors import ApiError
 from ..core.paths import DEFAULT_RFQ_ID, AppPaths
-from ..schemas.rfq import GroupRequest, TargetSlice
+from ..schemas.rfq import GroupRequest, RFQItemIn, RFQItemsRequest, TargetSlice
 from .cache_service import CacheService
 from .pipeline_bridge import InputError, dfg, inspect_workbook, pipeline, preview_items
 from .pocketbase_mirror import PocketBaseMirror
@@ -31,6 +31,31 @@ def sanitize_filename(name: str) -> str:
 
 def _now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+_HEADERS = ("position", "name", "description", "unit", "qty", "min_price", "max_price", "brand", "technical_specs")
+
+
+def build_items_workbook(items: list[RFQItemIn], dest: Path) -> None:
+    """Write items to an .xlsx with the canonical headers the pipeline loaders understand.
+
+    Strings are stored as plain text (never as formulas), so user input such as ``=SUM(..)``
+    cannot be evaluated by a spreadsheet application opening the file.
+    """
+    from openpyxl import Workbook
+
+    wb = Workbook(write_only=False)
+    ws = wb.active
+    ws.title = "products"
+    ws.append(list(_HEADERS))
+    for index, item in enumerate(items, start=1):
+        row = item.model_dump()
+        row["position"] = row["position"] or index
+        ws.append([row[h] for h in _HEADERS])
+        for cell in ws[ws.max_row]:
+            if isinstance(cell.value, str):
+                cell.data_type = "s"
+    wb.save(dest)
 
 
 class RFQService:
@@ -73,13 +98,31 @@ class RFQService:
             with open(tmp, "rb") as f:
                 if f.read(4) != b"PK\x03\x04":
                     raise ApiError(400, "invalid_rfq", "File is not a valid .xlsx workbook")
-            try:
-                info = inspect_workbook(tmp)
-            except InputError as exc:
-                raise ApiError(400, "invalid_rfq", str(exc)) from exc
-            os.replace(tmp, final)
+            return self._register(user, upload_id, clean_name, tmp, final)
         finally:
             tmp.unlink(missing_ok=True)
+
+    def save_items(self, user: AuthUser, req: RFQItemsRequest) -> dict[str, Any]:
+        """Create an RFQ from a JSON list of items (canonical headers) and register it like an upload."""
+        clean_name = sanitize_filename(req.filename or "materials-list")
+        if not clean_name.lower().endswith(".xlsx"):
+            clean_name += ".xlsx"
+        self.paths.ensure()
+        upload_id = uuid.uuid4().hex
+        final = self.paths.upload_path(upload_id)
+        tmp = final.with_name(final.stem + ".part.xlsx")
+        try:
+            build_items_workbook(req.items, tmp)
+            return self._register(user, upload_id, clean_name, tmp, final)
+        finally:
+            tmp.unlink(missing_ok=True)
+
+    def _register(self, user: AuthUser, upload_id: str, clean_name: str, tmp: Path, final: Path) -> dict[str, Any]:
+        try:
+            info = inspect_workbook(tmp)
+        except InputError as exc:
+            raise ApiError(400, "invalid_rfq", str(exc)) from exc
+        os.replace(tmp, final)
 
         meta = {
             "upload_id": upload_id,
@@ -110,7 +153,7 @@ class RFQService:
     # ------------------------------------------------------------------
     def list_files(self, user: AuthUser) -> list[dict[str, Any]]:
         files: list[dict[str, Any]] = []
-        if self.paths.default_rfq.is_file():
+        if self.paths.default_rfq is not None and self.paths.default_rfq.is_file():
             files.append(
                 {"rfq_file_id": DEFAULT_RFQ_ID, "filename": self.paths.default_rfq.name, "is_default": True}
             )
@@ -140,7 +183,7 @@ class RFQService:
     def resolve(self, user: AuthUser, rfq_file_id: str) -> tuple[Path, Optional[str]]:
         """Map an opaque id to an allowlisted path. Non-owners get 404 (no id probing)."""
         if rfq_file_id in ("", DEFAULT_RFQ_ID):
-            if not self.paths.default_rfq.is_file():
+            if self.paths.default_rfq is None or not self.paths.default_rfq.is_file():
                 raise ApiError(404, "rfq_not_found", "Default RFQ file not found")
             return self.paths.default_rfq, None
         path = self.paths.upload_path(rfq_file_id)

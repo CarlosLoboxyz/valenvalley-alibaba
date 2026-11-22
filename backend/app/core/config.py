@@ -36,7 +36,9 @@ class Settings(BaseSettings):
     debug_dir: str = "debug_raw"
 
     # --- RFQ / grouping ---
-    rfq_excel_file: str = "templates/products.xlsx"
+    # Optional operator-provided default RFQ (rfq_file_id="default"). Empty = no implicit default:
+    # users must upload or submit their own list. Never point this at sample data in production.
+    rfq_excel_file: str = ""
     family_granularity: str = "balanced"
     recommend_top_n: int = 5
 

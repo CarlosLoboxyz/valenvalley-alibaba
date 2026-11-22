@@ -52,7 +52,7 @@ async def test_error_payload_shape(client):
 
 
 async def test_validation_error_is_422_without_input_echo(client):
-    r = await client.post("/api/v1/rfq/group", headers=auth(), json={"pages": 0, "positions": "abc"})
+    r = await client.post("/api/v1/rfq/group", headers=auth(), json={"rfq_file_id": "default", "pages": 0, "positions": "abc"})
     assert r.status_code == 422
     assert r.json()["code"] == "validation_error"
     assert "abc" not in r.text

@@ -74,7 +74,7 @@ async def test_rfq_id_path_traversal(client):
 
 
 async def test_group_is_zero_credit_and_reports_estimates(client, scrape_calls):
-    r = await client.post("/api/v1/rfq/group", headers=auth(), json={"limit": 10, "pages": 2})
+    r = await client.post("/api/v1/rfq/group", headers=auth(), json={"rfq_file_id": "default", "limit": 10, "pages": 2})
     assert r.status_code == 200, r.text
     b = r.json()
     assert b["total_items"] == 10 and b["family_count"] == 3
@@ -88,17 +88,17 @@ async def test_group_is_zero_credit_and_reports_estimates(client, scrape_calls):
 
 
 async def test_group_stealth_selected(client):
-    b = (await client.post("/api/v1/rfq/group", headers=auth(), json={"limit": 10, "stealth": True})).json()
+    b = (await client.post("/api/v1/rfq/group", headers=auth(), json={"rfq_file_id": "default", "limit": 10, "stealth": True})).json()
     assert b["estimated_credits_selected"] == b["estimated_credits_stealth"] == 3 * 80
 
 
 async def test_group_invalid_granularity_and_positions(client):
-    r = await client.post("/api/v1/rfq/group", headers=auth(), json={"granularity": "huge"})
+    r = await client.post("/api/v1/rfq/group", headers=auth(), json={"rfq_file_id": "default", "granularity": "huge"})
     assert r.status_code == 422
-    r = await client.post("/api/v1/rfq/group", headers=auth(), json={"positions": "1-,"})
+    r = await client.post("/api/v1/rfq/group", headers=auth(), json={"rfq_file_id": "default", "positions": "1-,"})
     assert r.status_code == 400
 
 
 async def test_group_positions_filter(client):
-    b = (await client.post("/api/v1/rfq/group", headers=auth(), json={"positions": "1-4"})).json()
+    b = (await client.post("/api/v1/rfq/group", headers=auth(), json={"rfq_file_id": "default", "positions": "1-4"})).json()
     assert b["total_items"] == 4

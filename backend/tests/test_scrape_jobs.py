@@ -6,11 +6,11 @@ import httpx
 
 from .conftest import SECRET, auth, build_app, fake_listing, make_settings, wait_for_job
 
-BODY = {"limit": 10, "confirm_credit_spend": True}
+BODY = {"rfq_file_id": "default", "limit": 10, "confirm_credit_spend": True}
 
 
 async def test_requires_confirm_credit_spend(client, scrape_calls):
-    for payload in ({"limit": 10}, {"limit": 10, "confirm_credit_spend": False}):
+    for payload in ({"rfq_file_id": "default", "limit": 10}, {**BODY, "confirm_credit_spend": False}):
         r = await client.post("/api/v1/jobs/scrape", headers=auth(), json=payload)
         assert r.status_code == 400
         assert r.json()["code"] == "credit_confirmation_required"
@@ -71,7 +71,7 @@ async def test_job_not_visible_to_other_user(client):
 
 
 async def test_family_queries_subset_and_unknown(client, scrape_calls):
-    plan = (await client.post("/api/v1/rfq/group", headers=auth(), json={"limit": 10})).json()
+    plan = (await client.post("/api/v1/rfq/group", headers=auth(), json={"rfq_file_id": "default", "limit": 10})).json()
     one = plan["families"][0]["search_query"]
     r = await client.post("/api/v1/jobs/scrape", headers=auth(), json={**BODY, "family_queries": [one]})
     assert r.status_code == 202

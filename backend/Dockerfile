@@ -17,7 +17,6 @@ COPY backend/__init__.py backend/__init__.py
 COPY backend/app backend/app
 COPY scripts scripts
 COPY main.py ./
-COPY templates templates
 
 # Non-root runtime user; writable runtime dirs live on named volumes in compose
 RUN useradd --system --uid 10001 --home-dir /app app \
@@ -26,8 +25,7 @@ RUN useradd --system --uid 10001 --home-dir /app app \
 USER app
 
 ENV OUTPUT_DIR=/app/output \
-    DEBUG_DIR=/app/debug_raw \
-    RFQ_EXCEL_FILE=templates/products.xlsx
+    DEBUG_DIR=/app/debug_raw
 
 EXPOSE 8000
 HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=5 \

@@ -21,13 +21,13 @@ def seed_cache(client, queries: list[str], raw_shape: bool = False):
 
 
 async def families(client, limit=10):
-    return (await client.post("/api/v1/rfq/group", headers=auth(), json={"limit": limit})).json()["families"]
+    return (await client.post("/api/v1/rfq/group", headers=auth(), json={"rfq_file_id": "default", "limit": limit})).json()["families"]
 
 
 async def test_score_zero_credit_four_tabs_and_dashboard(client, scrape_calls):
     fams = await families(client)
     seed_cache(client, [f["search_query"] for f in fams[:2]])  # third family intentionally missing
-    r = await client.post("/api/v1/recommendations/score", headers=auth(), json={"limit": 10, "top_n": 3})
+    r = await client.post("/api/v1/recommendations/score", headers=auth(), json={"rfq_file_id": "default", "limit": 10, "top_n": 3})
     assert r.status_code == 200, r.text
     b = r.json()
     assert b["credits_consumed"] == 0 and scrape_calls == []
@@ -51,7 +51,7 @@ async def test_score_does_not_need_api_key(settings, fake_scrape):
 
     app = build_app(make_settings(__import__("pathlib").Path(settings.rfq_excel_file).parent, scrapingbee_api_key=None))
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://t") as c:
-        r = await c.post("/api/v1/recommendations/score", headers=auth(), json={"limit": 5})
+        r = await c.post("/api/v1/recommendations/score", headers=auth(), json={"rfq_file_id": "default", "limit": 5})
         assert r.status_code == 200
 
 
@@ -59,7 +59,7 @@ async def test_legacy_raw_cache_is_normalized_on_read(client):
     fams = await families(client)
     seed_cache(client, [f["search_query"] for f in fams], raw_shape=True)
     b = (await client.post("/api/v1/recommendations/score", headers=auth(),
-                           json={"limit": 10, "persist_artifacts": False})).json()
+                           json={"rfq_file_id": "default", "limit": 10, "persist_artifacts": False})).json()
     vendors = [v for p in b["recommendations"] for v in p["vendors"]]
     assert vendors, "raw-shaped cache must still produce vendors"
     v = vendors[0]
@@ -72,13 +72,13 @@ async def test_invalid_weights_rejected(client):
     for payload in ({"weight_price": -1}, {"weight_vendor_score": 0, "weight_rfq_fit": 0},
                     {"weight_price": 0, "weight_moq": 0, "weight_trade_assurance": 0,
                      "weight_years": 0, "weight_certs": 0}):
-        r = await client.post("/api/v1/recommendations/score", headers=auth(), json={"limit": 3, **payload})
+        r = await client.post("/api/v1/recommendations/score", headers=auth(), json={"rfq_file_id": "default", "limit": 3, **payload})
         assert r.status_code == 400 and r.json()["code"] == "invalid_weights", payload
 
 
 async def test_weights_are_normalized_and_reported(client):
     r = await client.post("/api/v1/recommendations/score", headers=auth(),
-                          json={"limit": 3, "weight_price": 100, "weight_moq": 0, "weight_trade_assurance": 0,
+                          json={"rfq_file_id": "default", "limit": 3, "weight_price": 100, "weight_moq": 0, "weight_trade_assurance": 0,
                                 "weight_years": 0, "weight_certs": 0, "weight_vendor_score": 50,
                                 "weight_rfq_fit": 50, "persist_artifacts": False})
     w = r.json()["effective_weights"]
@@ -89,9 +89,9 @@ async def test_hard_filters_move_vendors_to_disqualified(client):
     fams = await families(client)
     seed_cache(client, [f["search_query"] for f in fams])
     ok = (await client.post("/api/v1/recommendations/score", headers=auth(),
-                            json={"limit": 10, "persist_artifacts": False})).json()
+                            json={"rfq_file_id": "default", "limit": 10, "persist_artifacts": False})).json()
     strict = (await client.post("/api/v1/recommendations/score", headers=auth(),
-                                json={"limit": 10, "min_years": 50, "persist_artifacts": False})).json()
+                                json={"rfq_file_id": "default", "limit": 10, "min_years": 50, "persist_artifacts": False})).json()
     assert len(strict["disqualified"]) > len(ok["disqualified"])
     assert all(len(p["vendors"]) == 0 for p in strict["recommendations"])
     assert any("year" in " ".join(d["reasons"]).lower() for d in strict["disqualified"])
@@ -102,7 +102,7 @@ async def test_latest_empty_then_populated_and_user_scoped(client):
     assert r.status_code == 200 and r.json() == {"exists": False, "result": None}
     fams = await families(client)
     seed_cache(client, [f["search_query"] for f in fams])
-    await client.post("/api/v1/recommendations/score", headers=auth(), json={"limit": 10})
+    await client.post("/api/v1/recommendations/score", headers=auth(), json={"rfq_file_id": "default", "limit": 10})
     latest = (await client.get("/api/v1/recommendations/latest", headers=auth())).json()
     assert latest["exists"] and len(latest["result"]["recommendations"]) == 10
     bob = (await client.get("/api/v1/recommendations/latest", headers=auth("tok-bob"))).json()
@@ -114,7 +114,7 @@ async def test_export_xlsx_has_four_tabs_matching_json(client):
     fams = await families(client)
     seed_cache(client, [f["search_query"] for f in fams])
     body = (await client.post("/api/v1/recommendations/score", headers=auth(),
-                              json={"limit": 10, "top_n": 2})).json()
+                              json={"rfq_file_id": "default", "limit": 10, "top_n": 2})).json()
     r = await client.get("/api/v1/recommendations/export/xlsx", headers=auth())
     assert r.status_code == 200
     assert r.headers["content-type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -132,5 +132,5 @@ async def test_export_xlsx_has_four_tabs_matching_json(client):
 
 
 async def test_persist_false_writes_nothing(client):
-    await client.post("/api/v1/recommendations/score", headers=auth(), json={"limit": 3, "persist_artifacts": False})
+    await client.post("/api/v1/recommendations/score", headers=auth(), json={"rfq_file_id": "default", "limit": 3, "persist_artifacts": False})
     assert (await client.get("/api/v1/recommendations/latest", headers=auth())).json()["exists"] is False

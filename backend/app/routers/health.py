@@ -17,7 +17,7 @@ async def health(svc: Services = Depends(get_services)) -> HealthResponse:
         status="ok",
         scrapingbee_configured=svc.settings.scrapingbee_configured,
         cache_entries=entries,
-        default_rfq_exists=svc.paths.default_rfq.is_file(),
+        default_rfq_exists=bool(svc.paths.default_rfq and svc.paths.default_rfq.is_file()),
     )
 
 
