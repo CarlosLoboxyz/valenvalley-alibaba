@@ -1,0 +1,11 @@
+debug_raw
+output
+__pycache__/
+test_ui/
+ui/
+.direnv/
+.venv/
+.envrc
+.env
+shell.nix
+

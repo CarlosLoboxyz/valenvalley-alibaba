@@ -1,0 +1,101 @@
+position;name;description;unit;qty;min price; max price;brand;technical specs
+1;Intel Core i5-13400F CPU;10-core (6P+4E), 16-thread desktop processor, LGA 1700;pieces;50;140.00;165.00;Intel;{"cores": "10 (6P+4E)", "threads": 16, "socket": "LGA 1700", "tdp": "65W (base)"}
+2;AMD Ryzen 5 5600 CPU;6-core, 12-thread desktop processor, AM4 socket;pieces;50;85.00;105.00;AMD;{"cores": 6, "threads": 12, "socket": "AM4", "tdp": "65W"}
+3;Intel Core i7-12700K CPU;12-core (8P+4E), 20-thread unlocked processor;pieces;20;220.00;260.00;Intel;{"cores": "12 (8P+4E)", "threads": 20, "socket": "LGA 1700", "tdp": "125W"}
+4;AMD Ryzen 7 5800X CPU;8-core, 16-thread desktop processor, AM4;pieces;30;150.00;180.00;AMD;{"cores": 8, "threads": 16, "socket": "AM4", "tdp": "105W"}
+5;B760M Motherboard (DDR4);Micro-ATX motherboard for Intel 12th/13th Gen, LGA 1700;pieces;50;65.00;85.00;OEM/Generic;{"chipset": "B760", "form_factor": "Micro-ATX", "memory": "DDR4", "socket": "LGA 1700"}
+6;B550M Motherboard (AM4);Micro-ATX motherboard for AMD Ryzen 5000 series;pieces;50;55.00;75.00;OEM/Generic;{"chipset": "B550", "form_factor": "Micro-ATX", "memory": "DDR4", "socket": "AM4"}
+7;H610M Motherboard;Entry-level Micro-ATX motherboard for Intel LGA 1700;pieces;100;40.00;55.00;OEM/Generic;{"chipset": "H610", "form_factor": "Micro-ATX", "memory": "DDR4", "socket": "LGA 1700"}
+8;NVIDIA GeForce RTX 3060 12GB GPU;Dual-fan graphics card, 12GB GDDR6, PCIe 4.0;pieces;20;220.00;260.00;OEM/Generic (NVIDIA chip);{"memory": "12GB GDDR6", "interface": "PCIe 4.0 x16", "outputs": "HDMI, DP"}
+9;NVIDIA GeForce RTX 4060 8GB GPU;Dual-fan graphics card, 8GB GDDR6, DLSS 3;pieces;15;280.00;320.00;OEM/Generic (NVIDIA chip);{"memory": "8GB GDDR6", "interface": "PCIe 4.0 x8", "features": "DLSS 3"}
+10;AMD Radeon RX 6600 8GB GPU;Dual-fan graphics card, 8GB GDDR6, PCIe 4.0;pieces;20;160.00;190.00;OEM/Generic (AMD chip);{"memory": "8GB GDDR6", "interface": "PCIe 4.0 x8", "outputs": "HDMI, DP"}
+11;DDR4 16GB RAM Module (3200MHz);Desktop memory, 16GB single stick, CL16;pieces;200;22.00;30.00;OEM/Generic;{"capacity": "16GB", "speed": "3200MHz", "type": "DDR4", "form_factor": "UDIMM"}
+12;DDR5 16GB RAM Module (5600MHz);Desktop memory, 16GB single stick, CL40;pieces;100;40.00;55.00;OEM/Generic;{"capacity": "16GB", "speed": "5600MHz", "type": "DDR5", "form_factor": "UDIMM"}
+13;DDR4 8GB RAM Module (2666MHz);Budget desktop memory, 8GB single stick;pieces;300;12.00;18.00;OEM/Generic;{"capacity": "8GB", "speed": "2666MHz", "type": "DDR4", "form_factor": "UDIMM"}
+14;CPU Air Cooler (4 Heat Pipes);Tower-style air cooler with 120mm RGB fan;pieces;100;8.00;15.00;OEM/Generic;{"heat_pipes": 4, "fan_size": "120mm", "socket_support": "Intel/AMD", "rgb": true}
+15;240mm AIO Liquid Cooler;All-in-one liquid CPU cooler with RGB pump and fans;pieces;30;35.00;55.00;OEM/Generic;{"radiator_size": "240mm", "fans": "2x 120mm RGB", "socket_support": "Intel/AMD"}
+16;512GB NVMe SSD (PCIe 3.0);M.2 2280 internal solid-state drive;pieces;150;22.00;32.00;OEM/Generic;{"capacity": "512GB", "interface": "PCIe 3.0 x4", "form_factor": "M.2 2280"}
+17;1TB NVMe SSD (PCIe 4.0);High-speed M.2 2280 internal SSD;pieces;100;45.00;65.00;OEM/Generic;{"capacity": "1TB", "interface": "PCIe 4.0 x4", "form_factor": "M.2 2280"}
+18;2TB SATA HDD (7200RPM);3.5-inch internal hard disk drive for bulk storage;pieces;80;35.00;50.00;OEM/Generic;{"capacity": "2TB", "rpm": 7200, "interface": "SATA III", "form_factor": "3.5-inch"}
+19;480GB SATA SSD (2.5-inch);2.5-inch solid-state drive for laptops/desktops;pieces;150;20.00;30.00;OEM/Generic;{"capacity": "480GB", "interface": "SATA III", "form_factor": "2.5-inch"}
+20;4TB External Hard Drive (USB 3.0);Portable external HDD with USB 3.0;pieces;50;55.00;75.00;OEM/Generic;{"capacity": "4TB", "interface": "USB 3.0", "portable": true}
+21;650W 80+ Bronze PSU;Semi-modular ATX power supply;pieces;80;28.00;40.00;OEM/Generic;{"wattage": "650W", "efficiency": "80+ Bronze", "modular": "Semi"}
+22;500W 80+ White PSU;Non-modular ATX power supply for basic builds;pieces;100;18.00;26.00;OEM/Generic;{"wattage": "500W", "efficiency": "80+ White", "modular": "No"}
+23;ATX Mid-Tower PC Case;Steel/glass case with tempered glass side panel;pieces;50;22.00;38.00;OEM/Generic;{"form_factor": "ATX Mid-Tower", "side_panel": "Tempered Glass", "front_io": "USB 3.0 x2"}
+24;Micro-ATX Slim PC Case;Compact case for Micro-ATX builds;pieces;80;15.00;25.00;OEM/Generic;{"form_factor": "Micro-ATX", "material": "Steel", "front_io": "USB 3.0 x1"}
+25;120mm RGB Case Fan (3-Pack);Cooling fans with addressable RGB;sets;100;12.00;20.00;OEM/Generic;{"size": "120mm", "rgb": "ARGB", "airflow": "~50 CFM", "quantity": 3}
+26;24-inch 1080p 75Hz Monitor;IPS panel, HDMI/VGA, slim bezel;pieces;50;65.00;85.00;OEM/Generic;{"size": "24-inch", "resolution": "1920x1080", "panel": "IPS", "refresh_rate": "75Hz"}
+27;27-inch 1440p 165Hz Gaming Monitor;IPS panel, 1ms MPRT, FreeSync;pieces;20;180.00;220.00;OEM/Generic;{"size": "27-inch", "resolution": "2560x1440", "panel": "IPS", "refresh_rate": "165Hz"}
+28;32-inch 4K VA Monitor;4K UHD, 60Hz, HDR10 support;pieces;15;220.00;280.00;OEM/Generic;{"size": "32-inch", "resolution": "3840x2160", "panel": "VA", "hdr": "HDR10"}
+29;15.6-inch Portable USB-C Monitor;Portable IPS monitor with USB-C and mini-HDMI;pieces;40;80.00;110.00;OEM/Generic;{"size": "15.6-inch", "resolution": "1920x1080", "panel": "IPS", "connectivity": "USB-C, Mini-HDMI"}
+30;Dual Monitor Arm (Gas Spring);Desk mount for two monitors up to 32-inch;pieces;30;25.00;40.00;OEM/Generic;{"monitor_size_support": "Up to 32-inch", "load_capacity": "9kg per arm", "type": "Gas Spring"}
+31;104-Key Wireless Keyboard & Mouse Combo;2.4GHz wireless set, OEM layout, USB receiver;sets;200;8.00;14.00;OEM/Generic;{"connection": "2.4GHz Wireless", "keyboard_keys": 104, "mouse_dpi": "1200-1600"}
+32;87-Key TKL Mechanical Keyboard;Tenkeyless mechanical keyboard, RGB backlit, hot-swappable;pieces;100;15.00;28.00;OEM/Generic;{"layout": "TKL (87-key)", "switch_type": "Hot-swappable", "backlight": "RGB"}
+33;RGB Gaming Mouse (Wired);12800 DPI optical sensor, 8 programmable buttons;pieces;150;6.00;12.00;OEM/Generic;{"dpi": "12800", "buttons": 8, "connection": "Wired USB", "rgb": true}
+34;Ergonomic Vertical Mouse;Wireless vertical mouse for wrist comfort;pieces;120;5.00;10.00;OEM/Generic;{"connection": "2.4GHz Wireless", "dpi": "800-1600", "ergonomic": "Vertical"}
+35;Silent Wireless Mouse;Quiet-click optical mouse for office use;pieces;200;3.00;6.00;OEM/Generic;{"connection": "2.4GHz Wireless", "dpi": "1200", "feature": "Silent click"}
+36;Compact Mini Keyboard (Wireless);Portable keyboard for smart TVs/tablets;pieces;100;7.00;12.00;OEM/Generic;{"connection": "2.4GHz Wireless", "layout": "Compact", "touchpad": "Integrated"}
+37;USB Gaming Headset (7.1 Surround);Over-ear headset with noise-canceling mic;pieces;100;12.00;22.00;OEM/Generic;{"connection": "USB", "audio": "7.1 Virtual Surround", "mic": "Noise-canceling"}
+38;1080p Webcam with Microphone;Full HD webcam, USB plug-and-play;pieces;80;9.00;16.00;OEM/Generic;{"resolution": "1080p", "connection": "USB 2.0", "mic": "Built-in"}
+39;4K Webcam with Autofocus;UHD webcam for streaming/conferencing;pieces;40;25.00;40.00;OEM/Generic;{"resolution": "4K", "autofocus": true, "connection": "USB 3.0"}
+40;Desktop Computer Speakers (2.0);Compact stereo speakers, USB-powered;pairs;150;4.00;8.00;OEM/Generic;{"configuration": "2.0", "power": "USB", "connection": "3.5mm AUX"}
+41;USB Condenser Microphone;Stand-mounted mic for streaming/podcasting;pieces;60;15.00;28.00;OEM/Generic;{"connection": "USB", "pattern": "Cardioid", "stand": "Included"}
+42;6-in-1 USB-C Hub (4K HDMI);Multiport adapter with HDMI, USB 3.0, SD/TF;pieces;200;5.00;12.00;OEM/Generic;{"ports": "HDMI 4K, USB 3.0 x3, SD/TF", "material": "Aluminum"}
+43;8-in-1 USB-C Docking Station;Docking station with HDMI, DisplayPort, Ethernet, PD;pieces;80;18.00;30.00;OEM/Generic;{"ports": "HDMI, DP, RJ45, USB 3.0 x3, PD", "power_delivery": "100W pass-through"}
+44;USB-C to HDMI 4K Adapter Cable;6ft cable, supports 4K@60Hz;pieces;300;2.50;5.00;OEM/Generic;{"connector": "USB-C to HDMI", "resolution": "4K@60Hz", "length": "6ft"}
+45;DisplayPort to HDMI Adapter;DP male to HDMI female adapter;pieces;250;1.50;3.00;OEM/Generic;{"connector": "DP Male to HDMI Female", "resolution": "1080p/4K (varies)"}
+46;USB 3.0 Extension Cable (10ft);A-Male to A-Female active extension cable;pieces;200;2.00;4.00;OEM/Generic;{"type": "USB 3.0 A-Male to A-Female", "length": "10ft", "active": true}
+47;Cat6 Ethernet Cable (10ft, 5-Pack);Snagless RJ45 network cables;packs;100;4.00;7.00;OEM/Generic;{"category": "Cat6", "length": "10ft", "quantity": 5, "shielding": "UTP"}
+48;SATA III Data Cable (18-inch, 5-Pack);Straight-to-straight SATA cables;packs;150;2.00;3.50;OEM/Generic;{"type": "SATA III", "length": "18-inch", "quantity": 5}
+49;3.5mm Audio Extension Cable (6ft);Male-to-female headphone extension;pieces;300;0.80;1.50;OEM/Generic;{"connector": "3.5mm Male to Female", "length": "6ft"}
+50;USB-C to USB-A Adapter (2-Pack);OTG adapter for connecting peripherals;packs;200;1.00;2.00;OEM/Generic;{"connector": "USB-C Male to USB-A Female", "quantity": 2}
+51;Large Extended Mouse Pad;Water-resistant desk mat, stitched edges;pieces;300;2.00;5.00;OEM/Generic;{"size": "Extended (900x400mm)", "material": "Rubber base, fabric top"}
+52;Laptop Cooling Pad (5 Fans);Cooling pad with adjustable speed and LED;pieces;100;8.00;15.00;OEM/Generic;{"fans": 5, "adjustable_speed": true, "led": true}
+53;Monitor Privacy Screen Filter (24-inch);Anti-glare privacy filter for 24-inch monitors;pieces;80;6.00;12.00;OEM/Generic;{"size": "24-inch", "feature": "Privacy/anti-glare"}
+54;Cable Management Kit;Sleeves, clips, and ties for cable organization;kits;150;3.00;6.00;OEM/Generic;{"includes": "Sleeves, clips, ties"}
+55;CPU Thermal Paste (4g Tube);High-performance thermal compound;pieces;200;1.50;3.00;OEM/Generic;{"weight": "4g", "conductivity": "High"}
+56;Anti-Static Wrist Strap;ESD-safe wrist strap for PC building;pieces;100;1.00;2.50;OEM/Generic;{"type": "Anti-static", "adjustable": true}
+57;USB 3.0 4-Port Hub (Powered);Powered USB hub with individual switches;pieces;120;6.00;12.00;OEM/Generic;{"ports": "4x USB 3.0", "power": "External adapter", "switches": "Individual"}
+58;7-Port USB 2.0 Hub;Compact hub for low-power peripherals;pieces;150;3.00;6.00;OEM/Generic;{"ports": "7x USB 2.0", "power": "Bus-powered"}
+59;SD Card Reader (USB 3.0);High-speed card reader for SD/microSD;pieces;100;2.50;5.00;OEM/Generic;{"interface": "USB 3.0", "slots": "SD, microSD"}
+60;MicroSD to SD Card Adapter (5-Pack);Passive adapters for microSD cards;packs;200;1.00;2.00;OEM/Generic;{"quantity": 5, "type": "MicroSD to SD"}
+61;Laptop Sleeve (14-inch);Water-resistant neoprene sleeve;pieces;150;3.00;7.00;OEM/Generic;{"size": "14-inch", "material": "Neoprene"}
+62;Backpack for 15.6-inch Laptop;Anti-theft design with USB charging port;pieces;80;10.00;20.00;OEM/Generic;{"laptop_size": "15.6-inch", "features": "Anti-theft, USB port"}
+63;Monitor Stand with Drawer;Wooden monitor riser with storage;pieces;60;8.00;15.00;OEM/Generic;{"material": "Wood", "feature": "Drawer storage"}
+64;Under-Desk Keyboard Tray;Adjustable clamp-on keyboard tray;pieces;50;7.00;14.00;OEM/Generic;{"mount": "Clamp-on", "adjustable": true}
+65;Footrest for Under Desk;Ergonomic footrest with massage surface;pieces;60;6.00;12.00;OEM/Generic;{"feature": "Massage surface", "adjustable": "Tilt"}
+66;Webcam Cover Slide (5-Pack);Privacy slider for laptops/monitors;packs;300;0.50;1.20;OEM/Generic;{"quantity": 5, "feature": "Privacy slide"}
+67;Cable Labels (100-Pack);Write-on cable tags for organization;packs;200;1.00;2.50;OEM/Generic;{"quantity": 100, "type": "Write-on labels"}
+68;Velcro Cable Ties (50-Pack);Reusable cable management ties;packs;250;1.50;3.00;OEM/Generic;{"quantity": 50, "type": "Velcro"}
+69;CPU Installation Tool;LGA 1700/AM5 contact frame for better cooling;pieces;100;3.00;6.00;OEM/Generic;{"compatibility": "Intel LGA 1700 / AMD AM5"}
+70;PC Dust Filter Kit (3-Pack);Magnetic dust filters for PC cases;packs;150;2.00;4.50;OEM/Generic;{"quantity": 3, "mount": "Magnetic"}
+71;PCIe Gigabit Network Card;10/100/1000Mbps Ethernet adapter;pieces;100;4.00;8.00;OEM/Generic;{"interface": "PCIe x1", "speed": "10/100/1000Mbps", "port": "RJ45"}
+72;USB Wi-Fi Adapter (AC1200);Dual-band USB Wi-Fi dongle;pieces;150;5.00;10.00;OEM/Generic;{"standard": "802.11ac", "speed": "AC1200", "interface": "USB 2.0"}
+73;PCIe Wi-Fi 6 Card;Wi-Fi 6 + Bluetooth 5.1 PCIe adapter;pieces;80;12.00;22.00;OEM/Generic;{"standard": "Wi-Fi 6 (802.11ax)", "bluetooth": "5.1", "interface": "PCIe x1"}
+74;USB Bluetooth 5.0 Adapter;Mini dongle for Bluetooth peripherals;pieces;200;2.00;4.00;OEM/Generic;{"version": "Bluetooth 5.0", "interface": "USB 2.0"}
+75;PCIe Sound Card (5.1 Channel);Internal sound card for improved audio;pieces;60;8.00;15.00;OEM/Generic;{"channels": "5.1", "interface": "PCIe x1", "outputs": "3.5mm jacks"}
+76;USB External Sound Card;Plug-and-play USB audio adapter;pieces;150;3.00;6.00;OEM/Generic;{"interface": "USB 2.0", "outputs": "3.5mm mic/headphone"}
+77;PCIe USB 3.0 Expansion Card (4-Port);Adds four USB 3.0 ports via PCIe;pieces;100;6.00;12.00;OEM/Generic;{"ports": "4x USB 3.0", "interface": "PCIe x1"}
+78;PCIe SATA Expansion Card (4-Port);Adds four internal SATA III ports;pieces;60;8.00;15.00;OEM/Generic;{"ports": "4x SATA III", "interface": "PCIe x1"}
+79;HDMI Capture Card (1080p60);USB capture card for streaming;pieces;50;15.00;28.00;OEM/Generic;{"resolution": "1080p60", "interface": "USB 3.0", "input": "HDMI"}
+80;4K HDMI Capture Card;USB capture card for 4K30/1080p120;pieces;30;35.00;55.00;OEM/Generic;{"resolution": "4K30 / 1080p120", "interface": "USB 3.0", "input": "HDMI"}
+81;14-inch Business Laptop (N3350);Budget laptop, 6GB RAM, 256GB SSD, Windows 11;pieces;50;130.00;170.00;OEM/Generic;{"cpu": "Intel Celeron N3350", "ram": "6GB", "storage": "256GB SSD", "os": "Windows 11"}
+82;15.6-inch Laptop (i5-1135G7);Mid-range laptop, 8GB RAM, 512GB SSD;pieces;30;280.00;340.00;OEM/Generic;{"cpu": "Intel Core i5-1135G7", "ram": "8GB", "storage": "512GB SSD"}
+83;Mini PC (Intel N100);Compact desktop, 8GB RAM, 256GB SSD;pieces;80;90.00;120.00;OEM/Generic;{"cpu": "Intel N100", "ram": "8GB", "storage": "256GB SSD", "form_factor": "Mini PC"}
+84;Mini PC (Ryzen 5 5500U);Compact desktop, 16GB RAM, 512GB SSD;pieces;40;180.00;220.00;OEM/Generic;{"cpu": "AMD Ryzen 5 5500U", "ram": "16GB", "storage": "512GB SSD"}
+85;All-in-One PC (21.5-inch);AIO desktop with i3, 8GB RAM, 256GB SSD;pieces;25;200.00;260.00;OEM/Generic;{"screen": "21.5-inch 1080p", "cpu": "Intel Core i3", "ram": "8GB", "storage": "256GB SSD"}
+86;Gaming PC (Ryzen 5 + RTX 3060);Pre-built gaming desktop, 16GB RAM, 1TB SSD;pieces;15;550.00;650.00;OEM/Generic;{"cpu": "AMD Ryzen 5", "gpu": "RTX 3060 12GB", "ram": "16GB", "storage": "1TB SSD"}
+87;Office Desktop PC (i5-12400);Business desktop, 8GB RAM, 256GB SSD;pieces;40;220.00;280.00;OEM/Generic;{"cpu": "Intel Core i5-12400", "ram": "8GB", "storage": "256GB SSD"}
+88;Thin Client Mini PC;Fanless mini PC for basic office tasks;pieces;100;60.00;90.00;OEM/Generic;{"cpu": "Intel Celeron", "ram": "4GB", "storage": "64GB eMMC", "fanless": true}
+89;RGB Gaming Mouse Pad (Large);Extended RGB mouse pad with USB;pieces;100;6.00;12.00;OEM/Generic;{"size": "Extended", "rgb": true, "usb_powered": true}
+90;Gaming Headset Stand;Headphone stand with RGB base;pieces;80;4.00;8.00;OEM/Generic;{"material": "ABS", "rgb": true}
+91;Controller for PC (Wireless);Wireless game controller, USB receiver;pieces;70;10.00;18.00;OEM/Generic;{"connection": "2.4GHz Wireless", "compatibility": "PC"}
+92;Streaming Light Ring (10-inch);LED ring light with tripod and phone holder;pieces;60;8.00;15.00;OEM/Generic;{"size": "10-inch", "color_temp": "Adjustable", "tripod": "Included"}
+93;Green Screen Backdrop (5x7ft);Collapsible green screen for streaming;pieces;40;10.00;18.00;OEM/Generic;{"size": "5x7ft", "material": "Muslin", "collapsible": true}
+94;Elgato Stream Deck Mini (OEM);6-key programmable controller for streaming;pieces;30;40.00;60.00;OEM/Generic;{"keys": 6, "interface": "USB", "programmable": true}
+95;USB Foot Pedal (3-Pedal);Programmable foot pedal for gaming/productivity;pieces;50;12.00;22.00;OEM/Generic;{"pedals": 3, "interface": "USB", "programmable": true}
+96;Screen Cleaning Kit;Spray + microfiber cloth for monitors/laptops;kits;200;1.50;3.00;OEM/Generic;{"includes": "Spray, microfiber cloth"}
+97;Compressed Air Duster (Electric);Rechargeable electric air duster for PC cleaning;pieces;80;10.00;18.00;OEM/Generic;{"type": "Electric", "rechargeable": true}
+98;PC Tool Kit (Precision);Screwdriver set and anti-static tools;kits;100;5.00;10.00;OEM/Generic;{"includes": "Precision screwdrivers, tweezers, pry tools"}
+99;Surge Protector Power Strip (6-Outlet);6 outlets, USB ports, surge protection;pieces;120;6.00;12.00;OEM/Generic;{"outlets": 6, "usb_ports": 2, "surge_protection": true}
+100;UPS Battery Backup (650VA);Uninterruptible power supply for desktop PCs;pieces;40;35.00;55.00;OEM/Generic;{"capacity": "650VA", "outlets": "4-6", "runtime": "~10-15 min (typical load)"}
