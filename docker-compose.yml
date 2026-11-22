@@ -3,9 +3,13 @@
 #   cp .env.example .env   # fill in SCRAPINGBEE_API_KEY, PB_ADMIN_*, CORS_ORIGINS, ...
 #   docker compose up -d --build
 #
-# The SvelteKit frontend lives in a separate repository. A placeholder service is
-# included behind the "frontend" profile; point FRONTEND_CONTEXT at that repo and run
-#   docker compose --profile frontend up -d --build
+# STANDALONE DEV STACK. Production is orchestrated by the valenvalley monorepo
+# (docker-compose.yml + Caddy at its root), which builds this repo's Dockerfiles
+# (backend/Dockerfile, pocketbase/Dockerfile) with this repo as a submodule.
+#
+# The SvelteKit frontend lives in a separate repository. The "frontend" profile builds it
+# from FRONTEND_CONTEXT (its own Dockerfile) for end-to-end dev testing:
+#   FRONTEND_CONTEXT=../front docker compose --profile frontend up -d --build
 
 name: alibaba-sourcing
 
@@ -63,21 +67,24 @@ services:
     cap_drop:
       - ALL
 
-  # Placeholder: the SvelteKit app is built from its own repository.
+  # Dev-only: the SvelteKit app is built from its own repository (see its Dockerfile).
+  # It logs users in against PocketBase on the server side and calls this backend with the
+  # user's token, so neither PocketBase nor the backend needs to be reachable from the browser
+  # for the app to work.
   frontend:
     profiles: ["frontend"]
     build:
       context: ${FRONTEND_CONTEXT:-./frontend}
-      args:
-        PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:8000/api/v1}
-        PUBLIC_POCKETBASE_URL: ${PUBLIC_POCKETBASE_URL:-http://localhost:8090}
     restart: unless-stopped
     depends_on:
-      - backend
-      - pocketbase
+      backend:
+        condition: service_healthy
+      pocketbase:
+        condition: service_healthy
     environment:
-      PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:8000/api/v1}
-      PUBLIC_POCKETBASE_URL: ${PUBLIC_POCKETBASE_URL:-http://localhost:8090}
+      BACKEND_URL: http://backend:8000
+      POCKETBASE_URL: http://pocketbase:8090
+      ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:5173}
     ports:
       - "${FRONTEND_PORT:-5173}:3000"
 

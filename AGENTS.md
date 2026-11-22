@@ -44,7 +44,7 @@ Keep existing pipeline modules intact and add the FastAPI application under `bac
 ├── .env                                 # Secrets, proxy settings, default client rules & weights
 ├── main.py                              # Existing CLI orchestrator (MUST remain functional)
 ├── templates/products.xlsx              # Sample 100-item RFQ catalog (sheet: "products"); default RFQ_EXCEL_FILE
-├── docker-compose.yml                   # pocketbase + backend (+ frontend placeholder profile)
+├── docker-compose.yml                   # standalone dev stack: pocketbase + backend (+ optional frontend profile)
 ├── pocketbase/                          # Dockerfile (pinned, checksummed binary) + pb_migrations/
 ├── output/                              # Shared runtime artifacts
 │   ├── products_grouped.xlsx
@@ -315,16 +315,16 @@ Verify interactive OpenAPI docs load cleanly at `http://localhost:8000/docs` and
 
 ## 12. Authentication, Persistence & Deployment (added)
 
-- **Frontend lives in another repo** (SvelteKit). It signs users in/up **directly against PocketBase** (JS SDK) and sends `Authorization: Bearer <pb token>` to this API. FastAPI never handles passwords.
+- **Frontend lives in another repo** (SvelteKit). Its *server* signs users in/up against PocketBase (REST, `auth-with-password`), keeps the PocketBase token in an httpOnly cookie and calls this API server-side with `Authorization: Bearer <user's pb token>`. The browser never talks to PocketBase or to this API directly (so CORS is irrelevant for it). FastAPI never handles passwords.
 - **Auth dependency** (`core/auth.py`): validates the token via PocketBase `auth-refresh` (cached `AUTH_CACHE_TTL_SECONDS`, keyed by token hash). Every route except `/health` and `/config` requires it. `GET /api/v1/me` returns the caller.
 - **Credit-spending routes (`/jobs/*`)** additionally require a **verified email** (`REQUIRE_VERIFIED_EMAIL`, needs PocketBase SMTP) plus `confirm_credit_spend: true`. Self-registration is open and there is no per-user quota, so optional global caps exist: `MAX_CREDITS_PER_JOB`, `MAX_CREDITS_PER_DAY`. One active live job per user; no two jobs may claim the same query (HTTP 409).
 - **Ownership:** uploads, jobs and run artifacts belong to a user; non-owners get **404** (not 403). Artifacts live in `output/users/{user_id}/`, uploads in `output/uploads/`, job snapshots in `output/jobs/`. The **scrape cache is global and shared** (same query = same listings = credits saved). Cache eviction (`DELETE /cache/{key}`) and `GET /debug/files` are **admin-only** (`ADMIN_EMAILS`).
 - **PocketBase mirror** (`rfq_files`, `scrape_jobs`, `runs`) is written with the *user's own token* for history/UI only. It is display data, never authoritative for credits or job state.
-- **SSE auth:** `EventSource` cannot set headers; the frontend must use a fetch-based SSE client. `Last-Event-ID` resume is supported.
+- **SSE auth:** `EventSource` cannot set headers; the frontend must stream through a server-side proxy route or a fetch-based client. Any proxy in front must disable response buffering. `Last-Event-ID` resume is supported.
 - **Run with exactly ONE uvicorn worker.** Job manager, job guard and cache locks are in-process. Jobs left `queued/running` after a crash are marked `failed` on startup.
 - **Cache semantics:** only families whose pages all succeeded *and* returned >= 1 listing are checkpointed; failed/empty families are never cached (retried next run). Legacy raw-shaped listings (`moq_raw`, `supplier_url`) are normalized on read.
 - **Scripts rules:** loaders raise `InputError`, never `sys.exit` (CLI entry points convert). `scrape_term` stays as the CLI-compatible wrapper over `scrape_term_detailed`. Scoring overrides (weights, global max price) are parameters of `evaluate_rfq_position`; never mutate module globals per request.
-- **Deploy:** `cp .env.example .env && docker compose up -d --build`. Frontend is a placeholder behind `--profile frontend` (`FRONTEND_CONTEXT`). PocketBase binary is pinned and sha256-verified in `pocketbase/Dockerfile`.
+- **Deploy:** production is orchestrated by the **valenvalley monorepo** (root `docker-compose.yml` + Caddy), which builds `backend/Dockerfile` (context = this repo root) and `pocketbase/Dockerfile` (context = `pocketbase/`). This repo's `docker-compose.yml` is the standalone dev stack: `cp .env.example .env && docker compose up -d --build` (frontend optional via `--profile frontend`, `FRONTEND_CONTEXT=../front`). PocketBase binary is pinned and sha256-verified in `pocketbase/Dockerfile`.
 - **Python:** target 3.11+; Docker image uses 3.12; dev venv is 3.14.
 
 ### Verification (updated)

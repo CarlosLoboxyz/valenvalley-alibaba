@@ -1,7 +1,7 @@
 """PocketBase-backed authentication.
 
-The SvelteKit frontend signs users in directly against PocketBase and sends the
-resulting token as ``Authorization: Bearer <token>``. We validate it by asking
+The SvelteKit frontend server signs users in against PocketBase and forwards the
+user's token as ``Authorization: Bearer <token>``. We validate it by asking
 PocketBase to refresh it (``auth-refresh``) and cache the verdict briefly, keyed by a
 hash of the token so raw tokens are never kept in memory longer than a request.
 """
