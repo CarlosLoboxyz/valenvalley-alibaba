@@ -19,7 +19,7 @@ from .cache_service import CacheService
 from .pipeline_bridge import InputError, dfg, inspect_workbook, pipeline, preview_items
 from .pocketbase_mirror import PocketBaseMirror
 
-_SAFE_NAME = re.compile(r"[^A-Za-z0-9._ -]+")
+_SAFE_NAME = re.compile(r"[^\w._ -]+")  # unicode letters allowed; the name is metadata only, never a path
 _CHUNK = 1024 * 1024
 
 
@@ -104,9 +104,8 @@ class RFQService:
 
     def save_items(self, user: AuthUser, req: RFQItemsRequest) -> dict[str, Any]:
         """Create an RFQ from a JSON list of items (canonical headers) and register it like an upload."""
-        clean_name = sanitize_filename(req.filename or "materials-list")
-        if not clean_name.lower().endswith(".xlsx"):
-            clean_name += ".xlsx"
+        stem = re.sub(r"\.(csv|xlsx)$", "", (req.filename or "materials-list").strip(), flags=re.IGNORECASE)
+        clean_name = sanitize_filename(stem or "materials-list") + ".xlsx"
         self.paths.ensure()
         upload_id = uuid.uuid4().hex
         final = self.paths.upload_path(upload_id)
@@ -195,6 +194,13 @@ class RFQService:
     # ------------------------------------------------------------------
     # Shared plan builder (also used by scoring and scrape jobs)
     # ------------------------------------------------------------------
+    def _display_name(self, rfq_file_id: str, path: Path) -> str:
+        """Name shown in reports: the user's filename for uploads, the file name for the default RFQ."""
+        if rfq_file_id in ("", DEFAULT_RFQ_ID):
+            return path.name
+        meta = self._read_meta(self.paths.upload_meta_path(rfq_file_id))
+        return str(meta.get("filename") or path.name) if meta else path.name
+
     def build_plan(self, user: AuthUser, target: TargetSlice) -> dict[str, Any]:
         path, sheet = self.resolve(user, target.rfq_file_id)
         granularity = target.granularity or self.settings.family_granularity
@@ -216,7 +222,7 @@ class RFQService:
             "plan": plan,
             "granularity": granularity,
             "warnings": warnings,
-            "source_name": path.name,
+            "source_name": self._display_name(target.rfq_file_id, path),
         }
 
     # ------------------------------------------------------------------

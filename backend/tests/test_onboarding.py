@@ -121,5 +121,17 @@ async def test_score_meta_reports_rfq_file_id_and_latest_keeps_it(client):
     r = await client.post("/api/v1/recommendations/score", headers=auth(), json=body)
     assert r.status_code == 200, r.text
     assert r.json()["meta"]["rfq_file_id"] == up["upload_id"]
+    assert r.json()["meta"]["source_excel"] == up["filename"]
     latest = (await client.get("/api/v1/recommendations/latest", headers=auth())).json()
     assert latest["exists"] and latest["result"]["meta"]["rfq_file_id"] == up["upload_id"]
+
+
+async def test_items_filename_is_cleaned_but_keeps_accents(client):
+    r = await client.post(
+        "/api/v1/rfq/items", headers=auth(), json={"filename": "Ferretería marzo.CSV", "items": ITEMS[:1]}
+    )
+    assert r.json()["filename"] == "Ferretería marzo.xlsx"
+    r = await client.post(
+        "/api/v1/rfq/items", headers=auth(), json={"filename": "../../etc/passwd", "items": ITEMS[:1]}
+    )
+    assert r.json()["filename"] == "passwd.xlsx"
