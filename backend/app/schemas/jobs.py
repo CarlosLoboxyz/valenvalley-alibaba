@@ -51,6 +51,8 @@ class JobProgress(BaseModel):
 
 class JobStatus(BaseModel):
     job_id: str
+    rfq_file_id: Optional[str] = None  # list this job scrapes for (lets the UI re-score it)
+    granularity: Optional[str] = None
     status: JobState
     progress: JobProgress
     credits_spent: int

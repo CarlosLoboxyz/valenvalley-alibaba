@@ -110,6 +110,10 @@ async def test_active_job_lifecycle(client):
     # never leaks to another user
     assert (await client.get("/api/v1/jobs/active", headers=auth("tok-bob"))).json() is None
 
+    status = await wait_for_job(client, job_id)
+    assert status["rfq_file_id"] == up["upload_id"]
+    assert status["granularity"] in ("fine", "balanced", "broad")
+
 
 async def test_score_meta_reports_rfq_file_id_and_latest_keeps_it(client):
     up = (await client.post("/api/v1/rfq/items", headers=auth(), json={"items": ITEMS[:3]})).json()

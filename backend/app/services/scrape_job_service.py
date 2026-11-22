@@ -42,6 +42,8 @@ class Job:
     job_id: str
     user: AuthUser
     projected: dict[str, Any]
+    rfq_file_id: str = ""
+    granularity: str = ""
     created_at: str = field(default_factory=_now)
     status: str = "queued"
     finished_at: Optional[str] = None
@@ -62,6 +64,8 @@ class Job:
             return {
                 "job_id": self.job_id,
                 "owner_id": self.user.id,
+                "rfq_file_id": self.rfq_file_id,
+                "granularity": self.granularity,
                 "status": self.status,
                 "progress": {
                     "completed_families": self.completed_families,
@@ -204,7 +208,10 @@ class ScrapeJobService:
         if conflict:
             raise ApiError(409, "job_conflict", conflict)
 
-        job = Job(job_id=job_id, user=user, projected=projected, total_families=len(plan))
+        job = Job(
+            job_id=job_id, user=user, projected=projected, total_families=len(plan),
+            rfq_file_id=req.rfq_file_id, granularity=built["granularity"],
+        )
         caps = [c for c in (cap_job, remaining_day) if c is not None]
         with self._registry_lock:
             self._jobs[job_id] = job
