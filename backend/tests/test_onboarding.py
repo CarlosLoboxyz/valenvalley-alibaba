@@ -109,3 +109,13 @@ async def test_active_job_lifecycle(client):
     assert (await client.get("/api/v1/jobs/active", headers=auth())).json() is None
     # never leaks to another user
     assert (await client.get("/api/v1/jobs/active", headers=auth("tok-bob"))).json() is None
+
+
+async def test_score_meta_reports_rfq_file_id_and_latest_keeps_it(client):
+    up = (await client.post("/api/v1/rfq/items", headers=auth(), json={"items": ITEMS[:3]})).json()
+    body = {"rfq_file_id": up["upload_id"]}
+    r = await client.post("/api/v1/recommendations/score", headers=auth(), json=body)
+    assert r.status_code == 200, r.text
+    assert r.json()["meta"]["rfq_file_id"] == up["upload_id"]
+    latest = (await client.get("/api/v1/recommendations/latest", headers=auth())).json()
+    assert latest["exists"] and latest["result"]["meta"]["rfq_file_id"] == up["upload_id"]

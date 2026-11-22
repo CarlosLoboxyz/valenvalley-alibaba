@@ -202,6 +202,7 @@ class ScoringService:
             family_plan=plan,
             scraped_counts=run.scraped_counts,
         )
+        report["meta"]["rfq_file_id"] = req.rfq_file_id
         report["meta"]["generated_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         report["meta"]["effective_weights"] = effective
         report["meta"]["missing_cache_families"] = [
